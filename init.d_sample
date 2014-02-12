@@ -1,0 +1,62 @@
+#!/bin/sh
+# template
+# chkconfig: 345 99 01
+# description: startup script for template
+# processname: template
+# pidfile: /var/run/
+. /etc/rc.d/init.d/functions
+
+prog="test"
+command="./while.sh"
+pidfile=/var/run/${prog}.pid
+
+start() {
+    echo -n $"Starting ${prog}: "
+    [ -f ${pidfile} ] && failure "${prog} is already running" && return 1
+    ${command} > /dev/null 2>&1 &
+    [ $? -eq 0 ] && echo $! > ${pidfile} && success "${prog} is run" && return 0
+    # happen to remain pid file, 
+    rm -f ${pidfile}
+    failure "${prog} cloud not run"
+    return 1
+}
+
+stop() {
+    echo -n $"Stopping ${prog}: "
+    if [ -f ${pidfile} ]; then
+        pid=`cat ${pidfile}`
+        rm -f ${pidfile}
+        [ -z ${pid} ] && failure "${pidfile} is invalid" && return 1
+        kill ${pid} && success "$prog stop"
+        return 0
+    else
+        failure "${prog} is not running"
+        return 1
+    fi
+}
+
+case "$1" in
+    start)
+        start
+	echo
+        exit $?
+        ;;
+    stop)
+        stop
+	echo
+        ;;
+    status)
+        status ${prog}
+        exit $?
+        ;;
+    restart)
+        stop
+	echo
+        start
+	echo
+        exit $?
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
